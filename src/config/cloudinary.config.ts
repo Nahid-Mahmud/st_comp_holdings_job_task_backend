@@ -149,7 +149,7 @@ export const uploadFileToCloudinary = async (
           {
             resource_type: resourceType,
             public_id: `${folder}/${uniqueFileName}`,
-            folder: `portfolio/${folder}`,
+            folder: `STCOMP/${folder}`,
           },
           (error, result) => {
             if (error) {
