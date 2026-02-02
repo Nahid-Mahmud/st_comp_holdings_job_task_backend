@@ -1,79 +1,82 @@
-import http, { Server } from 'http';
+import type { Server } from 'http';
 import { app } from './app';
-import dotenv from 'dotenv';
+import envVariables from './config/env';
 import { prisma } from './config/prisma';
 
-dotenv.config();
+let server: Server;
 
-let server: Server | null = null;
-async function checkDatabaseConnection() {
+async function connectToDb() {
   try {
     await prisma.$connect();
-    console.log('✅ Database connection established.');
+    // eslint-disable-next-line no-console
+    console.log('Database connected successfully');
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    process.exit(1);
+    // eslint-disable-next-line no-console
+    console.error(`Database connection error: ${error}`);
   }
 }
 
 async function startServer() {
   try {
-    server = http.createServer(app);
-    await checkDatabaseConnection();
-    server.listen(process.env.PORT, () => {
-      console.log(`🚀 Server is running on port ${process.env.PORT}`);
+    await connectToDb();
+    server = await app.listen(envVariables.PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`Server is running on port ${envVariables.PORT}`);
     });
-
-    handleProcessEvents();
   } catch (error) {
-    console.error('❌ Error during server startup:', error);
-    process.exit(1);
+    // eslint-disable-next-line no-console
+    console.error(error);
   }
 }
 
-/**
- * Gracefully shutdown the server and close database connections.
- * @param {string} signal - The termination signal received.
- */
-async function gracefulShutdown(signal: string) {
-  console.warn(`🔄 Received ${signal}, shutting down gracefully...`);
+startServer();
 
+//  handle graceful shutdown SIGTERM
+process.on('SIGTERM', () => {
+  // eslint-disable-next-line no-console
+  console.log('SIGTERM signal received: closing HTTP server');
   if (server) {
-    server.close(async () => {
-      console.log('✅ HTTP server closed.');
+    server.close(() => {
+      // eslint-disable-next-line no-console
+      console.log('HTTP server closed');
+    });
+  }
+});
 
-      try {
-        console.log('Server shutdown complete.');
-      } catch (error) {
-        console.error('❌ Error during shutdown:', error);
-      }
+//  handle graceful shutdown SIGINT
+process.on('SIGINT', () => {
+  // eslint-disable-next-line no-console
+  console.log('SIGINT signal received: closing HTTP server');
+  if (server) {
+    server.close(() => {
+      // eslint-disable-next-line no-console
+      console.log('HTTP server closed');
+    });
+  }
+});
 
-      process.exit(0);
+// handle unhandledRejection
+process.on('unhandledRejection', (reason, promise) => {
+  // eslint-disable-next-line no-console
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
     });
   } else {
-    process.exit(0);
+    process.exit(1);
   }
-}
+});
 
-/**
- * Handle system signals and unexpected errors.
- */
-function handleProcessEvents() {
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-  process.on('uncaughtException', (error) => {
-    console.error('💥 Uncaught Exception:', error);
-    gracefulShutdown('uncaughtException');
-  });
-
-  process.on('unhandledRejection', (reason) => {
-    console.error('💥 Unhandled Rejection:', reason);
-    gracefulShutdown('unhandledRejection');
-  });
-}
-
-// check if the database is connected
-
-// Start the application
-startServer();
+//  handle uncaughtException
+process.on('uncaughtException', (error) => {
+  // eslint-disable-next-line no-console
+  console.error('Uncaught Exception:', error);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
+});

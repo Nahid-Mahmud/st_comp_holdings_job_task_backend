@@ -12,11 +12,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  user
+  Admin
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+  id     Int        @id @default(autoincrement())
+  email  String     @unique
+  name   String?
+  role   UserRole   @default(user)
+  status UserStatus @default(active)
+  posts  Post[]
 }
 
 model Post {
