@@ -24,6 +24,7 @@ const createPlatformFee = async (
   const platformFee = await prisma.platformFee.create({
     data,
   });
+
   return platformFee;
 };
 
@@ -31,7 +32,7 @@ const createPlatformFee = async (
 const getAllPlatformFees = async (): Promise<PlatformFee[]> => {
   const platformFees = await prisma.platformFee.findMany({
     orderBy: {
-      created_at: 'desc',
+      created_at: 'asc',
     },
   });
   return platformFees;
