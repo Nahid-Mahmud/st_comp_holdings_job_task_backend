@@ -29,14 +29,115 @@ model User {
   name   String?
   role   UserRole   @default(user)
   status UserStatus @default(active)
-  posts  Post[]
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+model Specialists {
+  id                      String             @id @default(uuid()) @db.Uuid
+  average_rating          Decimal            @default(0.00) @db.Decimal(3, 2)
+  is_draft                Boolean            @default(true)
+  total_number_of_ratings Int                @default(0)
+  title                   String             @db.VarChar(255)
+  slug                    String             @unique
+  description             String             @db.Text
+  base_price              Decimal            @db.Decimal(10, 2)
+  platform_fee            Decimal            @db.Decimal(10, 2)
+  final_price             Decimal            @db.Decimal(10, 2)
+  verification_status     VerificationStatus @default(PENDING)
+  is_verified             Boolean            @default(false)
+  duration_days           Int
+  created_at              DateTime           @default(now())
+  updated_at              DateTime           @updatedAt
+  deleted_at              DateTime?
+
+  media             Media[]
+  service_offerings ServiceOffering[]
+
+  @@index([slug])
+  @@map("specialists")
+}
+
+model Media {
+  id            String    @id @default(uuid()) @db.Uuid
+  specialist_id String    @db.Uuid
+  file_name     String
+  file_size     Int
+  display_order Int       @default(0)
+  mime_type     MimeType
+  media_type    MediaType
+  uploaded_at   DateTime  @default(now())
+  deleted_at    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  specialist Specialists @relation(fields: [specialist_id], references: [id])
+
+  @@index([specialist_id])
+  @@map("media")
+}
+
+model ServiceOffering {
+  id                               String   @id @default(uuid()) @db.Uuid
+  specialist_id                    String   @db.Uuid
+  service_offerings_master_list_id String   @db.Uuid
+  created_at                       DateTime @default(now())
+  updated_at                       DateTime @updatedAt
+
+  // Relationships
+  specialist  Specialists               @relation(fields: [specialist_id], references: [id], onDelete: Cascade)
+  master_list ServiceOfferingMasterList @relation(fields: [service_offerings_master_list_id], references: [id])
+
+  @@index([specialist_id])
+  @@index([service_offerings_master_list_id])
+  @@map("service_offerings")
+}
+
+model ServiceOfferingMasterList {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String?  @db.Text
+  s3_key      String?
+  bucket_name String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relationships
+  offerings ServiceOffering[]
+
+  @@map("service_offerings_master_list")
+}
+
+model PlatformFee {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tier_name               TierName
+  min_value               Int
+  max_value               Int
+  platform_fee_percentage Decimal  @db.Decimal(5, 2)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@map("platform_fee")
+}
+
+// Enums based on the 'enum' types in your schema
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MimeType {
+  IMAGE_PNG
+  IMAGE_JPEG
+  IMAGE_WEBP
+}
+
+enum MediaType {
+  SERVICE_IMAGE
+  PROFILE_IMAGE
+}
+
+enum TierName {
+  BASIC
+  STANDARD
+  PREMIUM
 }
