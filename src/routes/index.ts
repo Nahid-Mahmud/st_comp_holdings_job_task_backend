@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { userRouter } from '../modules/user/user.route';
+
+import { platformFeeRouter } from '../modules/platformFee/platformFee.route';
 
 export const router: Router = Router();
 
@@ -10,8 +11,8 @@ interface IModuleRoute {
 
 const moduleRoutes: IModuleRoute[] = [
   {
-    path: '/users',
-    route: userRouter,
+    path: '/platform-fees',
+    route: platformFeeRouter,
   },
 ];
 
