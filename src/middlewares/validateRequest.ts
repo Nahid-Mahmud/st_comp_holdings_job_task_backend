@@ -9,7 +9,15 @@ export const validateRequest =
         req.body = JSON.parse(req.body.data);
       }
 
-      req.body = await ZodSchema.parseAsync(req.body);
+      // Wrap the request properties to match schema structure
+      const validatedData = await ZodSchema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
+
+      // Update request with validated data
+      req.body = validatedData.body;
       next();
     } catch (error) {
       next(error);
