@@ -178,6 +178,7 @@ const updateServiceOfferingMasterList = async (
             await deleteFileFormCloudinary(secureUrl);
           }
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Failed to delete old file:', error);
           // Continue anyway, don't throw error
         }
@@ -221,6 +222,7 @@ const deleteServiceOfferingMasterList = async (
     try {
       await deleteFileFormCloudinary(existingOffering.s3_key);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to delete file:', error);
       // Continue anyway, don't throw error
     }
