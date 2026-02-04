@@ -116,9 +116,6 @@ const getServiceOfferingMasterListById = async (
 ): Promise<ServiceOfferingMasterList | null> => {
   const serviceOffering = await prisma.serviceOfferingMasterList.findUnique({
     where: { id },
-    include: {
-      offerings: true,
-    },
   });
 
   if (!serviceOffering) {

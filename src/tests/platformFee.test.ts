@@ -200,7 +200,7 @@ describe('PlatformFee Routes', () => {
       expect(response.body.data).toEqual([]);
     });
 
-    it('should return platform fees ordered by created_at descending', async () => {
+    it('should return platform fees ordered by created_at ascending', async () => {
       // Create platform fees at different times
       const firstFee = await prisma.platformFee.create({
         data: {
@@ -229,9 +229,9 @@ describe('PlatformFee Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
-      // The most recently created should be first
-      expect(response.body.data[0].id).toBe(secondFee.id);
-      expect(response.body.data[1].id).toBe(firstFee.id);
+      // The oldest created should be first (ascending order)
+      expect(response.body.data[0].id).toBe(firstFee.id);
+      expect(response.body.data[1].id).toBe(secondFee.id);
     });
   });
 

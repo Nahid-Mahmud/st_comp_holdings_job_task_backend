@@ -3,6 +3,9 @@
 
 import { defineConfig } from 'prisma/config';
 import dotenv from 'dotenv';
+
+const envFile = process.env['NODE_ENV'] ? `.env.${process.env['NODE_ENV']}` : undefined;
+dotenv.config({ path: envFile });
 dotenv.config();
 
 const getDatabaseUrl = () => {
