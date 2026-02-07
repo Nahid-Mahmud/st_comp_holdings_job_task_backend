@@ -49,12 +49,12 @@ type UpdateSpecialistInput = Partial<
 };
 
 interface QuerySpecialistsInput {
-  page?: number;
-  limit?: number;
+  page?: number | string;
+  limit?: number | string;
   search?: string;
-  is_draft?: boolean;
+  is_draft?: boolean | string;
   verification_status?: Prisma.EnumVerificationStatusFilter;
-  is_verified?: boolean;
+  is_verified?: boolean | string;
 }
 
 interface PaginatedResponse<T> {
@@ -240,7 +240,11 @@ const getAllSpecialists = async (
     is_verified,
   } = query;
 
-  const skip = (page - 1) * limit;
+  // Parse numeric parameters (in case they come as strings from query params)
+  const parsedPage = typeof page === 'string' ? parseInt(page, 10) : page;
+  const parsedLimit = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+
+  const skip = (parsedPage - 1) * parsedLimit;
 
   // Build where clause
   const where: Prisma.SpecialistsWhereInput = {
@@ -254,8 +258,11 @@ const getAllSpecialists = async (
     ];
   }
 
+  // Parse boolean parameters (in case they come as strings from query params)
   if (is_draft !== undefined) {
-    where.is_draft = is_draft;
+    const parsedIsDraft =
+      typeof is_draft === 'string' ? is_draft === 'true' : is_draft;
+    where.is_draft = parsedIsDraft;
   }
 
   if (verification_status) {
@@ -263,7 +270,9 @@ const getAllSpecialists = async (
   }
 
   if (is_verified !== undefined) {
-    where.is_verified = is_verified;
+    const parsedIsVerified =
+      typeof is_verified === 'string' ? is_verified === 'true' : is_verified;
+    where.is_verified = parsedIsVerified;
   }
 
   // Get specialists and total count
@@ -271,7 +280,7 @@ const getAllSpecialists = async (
     prisma.specialists.findMany({
       where,
       skip,
-      take: limit,
+      take: parsedLimit,
       include: {
         service_offerings: {
           include: {
@@ -297,10 +306,10 @@ const getAllSpecialists = async (
   return {
     data: specialists,
     meta: {
-      page,
-      limit,
+      page: parsedPage,
+      limit: parsedLimit,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / parsedLimit),
     },
   };
 };
