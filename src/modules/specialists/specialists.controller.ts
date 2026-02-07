@@ -9,11 +9,8 @@ import AppError from '../../errors/AppError';
 const createSpecialist = catchAsync(async (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];
 
-  if (!files || files.length !== 3) {
-    throw new AppError(
-      StatusCodes.BAD_REQUEST,
-      'Exactly 3 photos are required'
-    );
+  if (!files || files.length === 0) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'At least 1 photo is required');
   }
 
   const specialist = await SpecialistsService.createSpecialist(req.body, files);
