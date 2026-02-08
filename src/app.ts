@@ -16,7 +16,8 @@ export const app: Application = express();
 app.use(cookieParser());
 
 const corsOptions: CorsOptions = {
-  origin: envVariables.FRONTEND_URL, // Add both localhost variations
+  origin:
+    envVariables.NODE_ENV === 'development' ? 'http://localhost:3000' : envVariables.FRONTEND_URL, // Add both localhost variations
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true, // This is crucial for cookies
