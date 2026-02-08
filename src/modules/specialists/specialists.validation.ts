@@ -40,6 +40,9 @@ export const updateSpecialistSchema = z.object({
     is_verified: z.boolean().optional(),
     deleted_media_ids: z.array(z.string().uuid('Invalid media ID')).optional(),
     display_order: z.array(z.number().int().min(0)).optional(),
+    service_offerings_master_list_ids: z
+      .array(z.string().uuid('Invalid service offering ID'))
+      .optional(),
   }),
 });
 

@@ -46,6 +46,7 @@ type UpdateSpecialistInput = Partial<
   duration_days?: number;
   deleted_media_ids?: string[];
   display_order?: number[];
+  service_offerings_master_list_ids?: string[];
 };
 
 interface QuerySpecialistsInput {
@@ -527,9 +528,55 @@ const updateSpecialist = async (
     });
   }
 
+  // Handle service offerings update
+  if (input.service_offerings_master_list_ids !== undefined) {
+    // Validate master list IDs if provided
+    if (input.service_offerings_master_list_ids.length > 0) {
+      const validMasterLists = await prisma.serviceOfferingMasterList.findMany({
+        where: {
+          id: {
+            in: input.service_offerings_master_list_ids,
+          },
+        },
+      });
+
+      if (
+        validMasterLists.length !==
+        input.service_offerings_master_list_ids.length
+      ) {
+        throw new AppError(
+          StatusCodes.BAD_REQUEST,
+          'One or more service offering master list IDs are invalid'
+        );
+      }
+    }
+
+    // Delete all existing service offerings
+    await prisma.serviceOffering.deleteMany({
+      where: {
+        specialist_id: id,
+      },
+    });
+
+    // Create new service offerings if any provided
+    if (input.service_offerings_master_list_ids.length > 0) {
+      await prisma.serviceOffering.createMany({
+        data: input.service_offerings_master_list_ids.map((masterListId) => ({
+          specialist_id: id,
+          service_offerings_master_list_id: masterListId,
+        })),
+      });
+    }
+  }
+
   // If base_price is being updated, recalculate platform fee and final price
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { deleted_media_ids, display_order, ...restInput } = input;
+  const {
+    deleted_media_ids,
+    display_order,
+    service_offerings_master_list_ids,
+    ...restInput
+  } = input;
   let updateData: Prisma.SpecialistsUpdateInput = { ...restInput };
 
   if (input.base_price) {
