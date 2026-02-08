@@ -12,7 +12,7 @@ export const setAuthCookie = (res: Response, tokenInfo: TokenInfo) => {
       secure: true,
       sameSite: 'none',
       // maxAge: 60 * 60 * 1000 * 24,
-      maxAge: 30 * 1000, // 30s
+      maxAge: 30 * 60 * 1000 // 30 minutes
     });
   }
 
