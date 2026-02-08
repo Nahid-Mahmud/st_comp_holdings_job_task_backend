@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Prisma } from '@prisma/client';
 import { MediaType, MimeType } from '@prisma/client';
 import { prisma } from '../../config/prisma';
@@ -570,7 +571,7 @@ const updateSpecialist = async (
   }
 
   // If base_price is being updated, recalculate platform fee and final price
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const {
     deleted_media_ids,
     display_order,
