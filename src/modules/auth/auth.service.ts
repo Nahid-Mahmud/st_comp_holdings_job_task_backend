@@ -5,6 +5,44 @@ import envVariables from '../../config/env';
 import { prisma } from '../../config/prisma';
 import AppError from '../../errors/AppError';
 import { verifyJwtToken } from '../../utils/jwt';
+import { createNewRefreshToken } from '../../utils/userTokens';
+import { hashPassword } from '../../utils/hashPassword';
+
+const register = async (email: string, password: string, name?: string) => {
+  if (!email || !password) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Email and password are required'
+    );
+  }
+
+  const normalizedEmail = email.toLowerCase();
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (existingUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User already exists');
+  }
+
+  const hashedPassword = await hashPassword(password);
+  const user = await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      password: hashedPassword,
+      name,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  return user;
+};
 
 // !login user
 
@@ -95,7 +133,10 @@ const resetPassword = async (token: string, newPassword: string) => {
   });
 
   if (!user || user.id !== decoded.id) {
-    throw new AppError(StatusCodes.NOT_FOUND, "User not found or token mismatch");
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'User not found or token mismatch'
+    );
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 12); // Increased salt rounds for better security
@@ -108,8 +149,22 @@ const resetPassword = async (token: string, newPassword: string) => {
   return { message: 'Password reset successful' };
 };
 
+const generateAccessTokenFromRefreshToken = async (
+  refreshTokenValue?: string
+) => {
+  if (!refreshTokenValue) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Refresh token is required');
+  }
+
+  const accessToken = await createNewRefreshToken(refreshTokenValue);
+
+  return { accessToken };
+};
+
 export const authService = {
+  register,
   login,
   forgetPassword,
   resetPassword,
+  generateAccessTokenFromRefreshToken,
 };

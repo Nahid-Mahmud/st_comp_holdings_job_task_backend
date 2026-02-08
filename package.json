@@ -12,7 +12,15 @@
     "lint": "npx eslint ./src",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "format:write": "prettier --write ."
+    "format:write": "prettier --write .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:studio": "prisma studio",
+    "prisma:db-push": "prisma db push",
+    "prisma:db-reset": "prisma migrate reset --force",
+    "prisma:migrate-test": "NODE_ENV=test prisma migrate dev --name init",
+    "prisma:generate-test": "NODE_ENV=test prisma generate",
+    "prisma:db-reset-test": "NODE_ENV=test prisma migrate reset --force"
   },
   "keywords": [],
   "author": "",

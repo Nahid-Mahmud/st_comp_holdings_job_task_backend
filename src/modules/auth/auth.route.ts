@@ -6,6 +6,11 @@ import { authValidation } from './auth.validation';
 const router = Router();
 
 router.post(
+  '/register',
+  validateRequest(authValidation.registerValidationSchema),
+  authController.register
+);
+router.post(
   '/login',
   validateRequest(authValidation.loginValidationSchema),
   authController.login
@@ -20,5 +25,12 @@ router.post(
   validateRequest(authValidation.resetPasswordValidationSchema),
   authController.resetPassword
 );
+
+router.post(
+  '/refresh-token',
+  authController.generateAccessTokenFromRefreshToken
+);
+
+router.post('/logout', authController.logout);
 
 export const authRoutes = router;

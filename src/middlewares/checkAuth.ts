@@ -17,10 +17,19 @@ export const checkAuth =
           'Access token is required'
         );
       }
-      const verifiedToken = verifyJwtToken(
-        accessToken,
-        envVariables.JWT.ACCESS_TOKEN_JWT_SECRET
-      );
+
+      let verifiedToken;
+      try {
+        verifiedToken = verifyJwtToken(
+          accessToken,
+          envVariables.JWT.ACCESS_TOKEN_JWT_SECRET
+        );
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('jwt expired')) {
+          throw new AppError(StatusCodes.UNAUTHORIZED, 'Token has expired');
+        }
+        throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid token');
+      }
 
       const isUserExist = await prisma.user.findUnique({
         where: { email: verifiedToken.email },
