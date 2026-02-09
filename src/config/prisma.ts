@@ -6,4 +6,8 @@ export const prisma = new PrismaClient({
       password: true,
     },
   },
+  transactionOptions: {
+    timeout: 10000,
+    maxWait: 5000,
+  },
 });

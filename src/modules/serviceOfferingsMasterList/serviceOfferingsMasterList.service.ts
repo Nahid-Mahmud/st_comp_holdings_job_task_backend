@@ -3,8 +3,8 @@ import { prisma } from '../../config/prisma';
 import AppError from '../../errors/AppError';
 import { StatusCodes } from 'http-status-codes';
 import {
-  deleteFileFormCloudinary,
   uploadFileToCloudinary,
+  deleteFileByPublicId,
 } from '../../config/cloudinary.config';
 
 import { buildCloudinarySecureUrl } from '../../utils/cloudinaryUrl';
@@ -34,6 +34,7 @@ const createServiceOfferingMasterList = async (
 
   let s3_key: string | undefined;
   let secureUrl: string | undefined;
+  let publicId: string | undefined;
 
   // Handle file upload if present
   if (file) {
@@ -41,6 +42,7 @@ const createServiceOfferingMasterList = async (
       const uploadResult = await uploadFileToCloudinary(file, bucket_name);
 
       s3_key = uploadResult.public_id;
+      publicId = uploadResult.public_id;
       secureUrl = uploadResult.secure_url;
     } catch (error) {
       throw new AppError(
@@ -51,27 +53,33 @@ const createServiceOfferingMasterList = async (
   }
 
   try {
-    const serviceOffering = await prisma.$transaction(async (tx) => {
-      // throw test error
-      //   throw new Error('Test error');
-      return tx.serviceOfferingMasterList.create({
-        data: {
-          title,
-          description,
-          s3_key,
-          bucket_name,
-        },
-      });
-    });
+    const serviceOffering = await prisma.$transaction(
+      async (tx) => {
+        // throw test error
+        //   throw new Error('Test error');
+        return tx.serviceOfferingMasterList.create({
+          data: {
+            title,
+            description,
+            s3_key,
+            bucket_name,
+          },
+        });
+      },
+      {
+        timeout: 10000,
+      }
+    );
 
     return {
       ...serviceOffering,
       secure_url: secureUrl,
     };
   } catch (error) {
-    if (secureUrl) {
+    // Cleanup uploaded file if transaction fails
+    if (publicId) {
       try {
-        await deleteFileFormCloudinary(secureUrl);
+        await deleteFileByPublicId(publicId);
       } catch (cleanupError) {
         // eslint-disable-next-line no-console
         console.error(
@@ -169,11 +177,7 @@ const updateServiceOfferingMasterList = async (
       // Delete old file from Cloudinary if it exists
       if (existingOffering.s3_key) {
         try {
-          // construct full public_id with extension
-          const secureUrl = buildCloudinarySecureUrl(existingOffering.s3_key);
-          if (secureUrl) {
-            await deleteFileFormCloudinary(secureUrl);
-          }
+          await deleteFileByPublicId(existingOffering.s3_key);
         } catch (error) {
           // eslint-disable-next-line no-console
           console.error('Failed to delete old file:', error);
@@ -217,7 +221,7 @@ const deleteServiceOfferingMasterList = async (
   // Delete file from Cloudinary if it exists
   if (existingOffering.s3_key) {
     try {
-      await deleteFileFormCloudinary(existingOffering.s3_key);
+      await deleteFileByPublicId(existingOffering.s3_key);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to delete file:', error);

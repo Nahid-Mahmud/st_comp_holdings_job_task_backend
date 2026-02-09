@@ -73,6 +73,48 @@ export const deleteFileFormCloudinary = async (url: string) => {
   }
 };
 
+// Delete file from Cloudinary using public_id directly
+export const deleteFileByPublicId = async (publicId: string) => {
+  if (!publicId || typeof publicId !== 'string') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Public ID is required and must be a string'
+    );
+  }
+
+  // Extract file extension from public_id to determine resource type
+  const fileExtension = publicId.split('.').pop()?.toLowerCase() || '';
+
+  let resourceType: 'image' | 'video' | 'raw' = 'raw';
+
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+  const videoExtensions = ['mp4', 'mov', 'avi', 'mkv'];
+
+  if (imageExtensions.includes(fileExtension)) {
+    resourceType = 'image';
+  } else if (videoExtensions.includes(fileExtension)) {
+    resourceType = 'video';
+  }
+
+  try {
+    const res = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+    });
+
+    // Check if deletion was successful
+    if (res.result !== 'ok' && res.result !== 'not found') {
+      throw new AppError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Failed to delete file: ${res.result}`
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, error.message);
+  }
+};
+
 // for invoice upload or any other pdf upload
 export const uploadBufferToCloudinary = async (
   buffer: Buffer,
