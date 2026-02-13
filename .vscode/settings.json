@@ -3,5 +3,7 @@
         "STCOMP",
         "WEBP",
         "youtu"
-    ]
+    ],
+    // lock prisma 6
+    "prisma.pinToPrisma6": true
 }
